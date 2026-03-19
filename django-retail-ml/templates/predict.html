@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header bg-primary text-white"><h5>Transaction Details</h5></div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label class="form-label">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.errors %}<small class="text-danger">{{ field.errors }}</small>{% endif %}
+                        </div>
+                    {% endfor %}
+                    <button type="submit" class="btn btn-primary w-100">Predict</button>
+                    <a href="{% url 'index' %}" class="btn btn-secondary w-100 mt-2">Back</a>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% if results %}
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header bg-success text-white"><h5>Model Predictions</h5></div>
+            <div class="card-body">
+                <div class="row">
+                    {% for model_name, prediction in results.items %}
+                    <div class="col-md-6 mb-3">
+                        <div class="alert alert-info">
+                            <h6>{{ model_name }}</h6>
+                            <p class="mb-1"><strong>Prediction:</strong> {{ prediction.prediction }}</p>
+                            <p class="mb-0"><strong>Confidence:</strong> {{ prediction.confidence }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
