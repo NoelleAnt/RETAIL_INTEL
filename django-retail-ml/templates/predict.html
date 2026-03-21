@@ -36,6 +36,22 @@
                     </div>
                     {% endfor %}
                 </div>
+
+                {% if chart_data %}
+                <hr />
+                <div class="mb-3 text-center">
+                    <h6>Model Confidence Visualization</h6>
+                    <img src="{{ chart_data }}" alt="Confidence chart" class="img-fluid" />
+                </div>
+                {% endif %}
+
+                {% if interpretation_text %}
+                <div class="alert alert-warning mt-3">
+                    <h6>Interpretation</h6>
+                    <p class="mb-0">{{ interpretation_text }}</p>
+                </div>
+                {% endif %}
+
             </div>
         </div>
     </div>

@@ -8,6 +8,10 @@ A Django-based web application that loads and preprocesses retail sales data, tr
 - Training of 5 ML models for classification
 - Web UI for inputting transaction details
 - Side-by-side comparison of model predictions
+- Confidence score chart visualization for model outputs
+- Written interpretation/explanation for ensemble and prediction confidence
+- Cross-validation and grid search in training to reduce overfitting
+- Train/test accuracy monitoring and overfitting risk estimate
 - Bootstrap-styled interface for usability
 
 ## Prerequisites
@@ -51,7 +55,9 @@ A Django-based web application that loads and preprocesses retail sales data, tr
 
 3. Access the app at `http://127.0.0.1:8000/`.
 
-4. Enter transaction details in the form and view predictions from all 5 models.
+5. Enter transaction details in the form and view predictions from all 5 models.
+   - A confidence bar chart is shown for model score comparison.
+   - A written interpretation provides ensemble consensus and confidence guidance.
 
 ## Contributing
 Fork the repository and submit pull requests for improvements.
