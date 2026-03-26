@@ -2,6 +2,7 @@ import os
 import joblib
 import numpy as np
 import pandas as pd
+from sklearn.calibration import LabelEncoder
 from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
 from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
@@ -13,7 +14,10 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score, accuracy_score, classification_report
 from mlxtend.frequent_patterns import fpgrowth, association_rules
 from .data_preprocessing import load_and_preprocess_data
-
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend
+import matplotlib.pyplot as plt
+import seaborn as sns
 def train_all_models():
     df_processed, encoders, numerical_features = load_and_preprocess_data()
 
@@ -159,6 +163,27 @@ def perform_clustering():
     optimal_k = range(2, max_clusters + 1)[np.argmax(silhouette_scores)]
     print(f"Optimal number of clusters (based on highest silhouette score): {optimal_k}")
 
+    # Plotting the Elbow Method and Silhouette Scores
+    plt.figure(figsize=(14, 5))
+    plt.subplot(1, 2, 1)
+    plt.plot(range(2, max_clusters + 1), wcss, marker='o', linestyle='--')
+    plt.title('Elbow Method For Optimal K')
+    plt.xlabel('Number of Clusters (K)')
+    plt.ylabel('WCSS')
+
+    plt.subplot(1, 2, 2)
+    plt.plot(range(2, max_clusters + 1), silhouette_scores, marker='o', linestyle='--')
+    plt.title('Silhouette Score For Optimal K')
+    plt.xlabel('Number of Clusters (K)')
+    plt.ylabel('Silhouette Score')
+    plt.tight_layout()
+    
+    # Save the plot
+    plots_dir = os.path.join(os.path.dirname(__file__), 'plots')
+    os.makedirs(plots_dir, exist_ok=True)
+    plt.savefig(os.path.join(plots_dir, 'clustering_elbow_silhouette.png'))
+    plt.close()
+
     # Apply K-Means clustering with optimal K
     kmeans = KMeans(n_clusters=optimal_k, init='k-means++', random_state=42, n_init=10)
     clusters = kmeans.fit_predict(cluster_df)
@@ -177,6 +202,18 @@ def perform_clustering():
             cluster_summary_categorical = cluster_summary_categorical.drop(columns=[f'{col_name}_Encoded'])
 
     print(pd.concat([cluster_summary, cluster_summary_categorical], axis=1))
+
+    # Visualization of clusters (example using first two components)
+    if len(cluster_features) >= 2:
+        plt.figure(figsize=(10, 7))
+        sns.scatterplot(x=cluster_df.iloc[:, 0], y=cluster_df.iloc[:, 1], hue=df_processed['Cluster'], palette='viridis', legend='full')
+        plt.title('Clusters Visualization (First two features)')
+        plt.xlabel(cluster_features[0])
+        plt.ylabel(cluster_features[1])
+        plt.savefig(os.path.join(plots_dir, 'cluster_visualization.png'))
+        plt.close()
+    else:
+        print("Not enough features to create a 2D scatter plot for cluster visualization.")
 
     # Save the model
     model_dir = os.path.join(os.path.dirname(__file__), 'trained_models')
@@ -288,6 +325,24 @@ def perform_regression():
     print("Feature Impact:")
     print(coef_df)
 
+    # Visualization
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+    axes[0].scatter(y_test_r, y_pred, alpha=0.5)
+    axes[0].plot([y_test_r.min(), y_test_r.max()], [y_test_r.min(), y_test_r.max()], 'r--')
+    axes[0].set_xlabel('Actual')
+    axes[0].set_ylabel('Predicted')
+    axes[0].set_title(f'Actual vs Predicted (R² = {r2:.3f})')
+
+    residuals = y_test_r - y_pred
+    axes[1].scatter(y_pred, residuals, alpha=0.5)
+    axes[1].axhline(y=0, color='r', linestyle='--')
+    axes[1].set_xlabel('Predicted')
+    axes[1].set_ylabel('Residuals')
+    axes[1].set_title('Residual Plot')
+    plt.tight_layout()
+    plt.savefig(os.path.join(plots_dir, 'regression_plots.png')) # type: ignore
+    plt.close()
+
     # Save the model
     model_dir = os.path.join(os.path.dirname(__file__), 'trained_models')
     os.makedirs(model_dir, exist_ok=True)
@@ -345,6 +400,17 @@ def train_notebook_classification():
     print("Classification Report:")
     print(classification_report(y_test, nb_pred, target_names=target_labels, zero_division=0))
 
+    # Confusion Matrix Plot for Naïve Bayes
+    from sklearn.metrics import confusion_matrix
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(confusion_matrix(y_test, nb_pred), annot=True, fmt='d', cmap='Blues',
+                xticklabels=target_labels, yticklabels=target_labels)
+    plt.title('Naïve Bayes Confusion Matrix')
+    plt.ylabel('Actual')
+    plt.xlabel('Predicted')
+    plt.savefig(os.path.join(plots_dir, 'nb_confusion_matrix.png')) # type: ignore
+    plt.close()
+
     results['Naive Bayes'] = {
         'accuracy': nb_accuracy,
         'model': nb_model,
@@ -361,6 +427,16 @@ def train_notebook_classification():
     print(f"Decision Tree Accuracy: {dt_accuracy:.4f}")
     print("Classification Report:")
     print(classification_report(y_test, dt_pred, target_names=target_labels, zero_division=0))
+
+    # Confusion Matrix Plot for Decision Tree
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(confusion_matrix(y_test, dt_pred), annot=True, fmt='d', cmap='Greens',
+                xticklabels=target_labels, yticklabels=target_labels)
+    plt.title('Decision Tree Confusion Matrix')
+    plt.ylabel('Actual')
+    plt.xlabel('Predicted')
+    plt.savefig(os.path.join(plots_dir, 'dt_confusion_matrix.png')) # type: ignore
+    plt.close()
 
     # Feature Importance
     feature_importance = pd.DataFrame({
